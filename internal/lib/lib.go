@@ -101,6 +101,7 @@ func (l *Lib) UpdatebookTimeId() (int, error) {
 func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 	//url_book = ''
 	url := fmt.Sprintf("http://yuyue.lib.qlu.edu.cn/api.php/spaces/%d/book", id)
+	l.Updatetime()
 	body := fmt.Sprintf("access_token=%s&userid=%d&type=1&id=%d&segment=%d", l.token, userid, id, l.BookTimeId+advanceTime)
 	Mlog.PF(logger.LINFO, "开始预约：%d", id)
 	bodyreader := strings.NewReader(body)
