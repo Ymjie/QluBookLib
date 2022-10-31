@@ -69,24 +69,27 @@ func book6(u *user.User, bidchan chan int, wg *sync.WaitGroup, ctx context.Conte
 			Mlog.PF(logger.LINFO, "开始预约：%d", bid)
 			bookresp, err := u.Book(bid, 1)
 			if err != nil {
-				if bookresp.Msg == "没有登录或登录已超时" {
+				Mlog.PF(logger.LINFO, "预约：%d失败,%s", bid, err.Error())
+			}
+			if bookresp.Msg == "没有登录或登录已超时" {
+				Mlog.PF(logger.LINFO, "预约：%d失败,%s", bid, bookresp.Msg)
+				cal()
+			}
+			if bookresp.Msg == "该空间当前状态不可预约" {
+				Mlog.PF(logger.LINFO, "预约：%d失败,%s", bid, bookresp.Msg)
+				bid, ok = <-bidchan
+				if !ok {
 					cal()
-				}
-				if bookresp.Msg == "该空间当前状态不可预约" {
-					bid, ok = <-bidchan
-					if !ok {
-						cal()
-					}
-				}
-				if bookresp.Msg == "当前用户在该时段已存在预约，不可重复预约" {
-					cal()
-				}
-				if bookresp.Status == 1 {
-					Mlog.PF(logger.LINFO, "账号：%s,已成功Book:%d,%v", u.Username, bid, bookresp)
-
 				}
 			}
+			if bookresp.Msg == "当前用户在该时段已存在预约，不可重复预约" {
+				Mlog.PF(logger.LINFO, "预约：%d失败,%s", bid, bookresp.Msg)
+				cal()
+			}
+			if bookresp.Status == 1 {
+				Mlog.PF(logger.LINFO, "账号：%s,已成功Book:%d,%v", u.Username, bid, bookresp)
 
+			}
 		case <-ctx.Done():
 			return
 
