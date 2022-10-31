@@ -103,7 +103,6 @@ func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 	url := fmt.Sprintf("http://yuyue.lib.qlu.edu.cn/api.php/spaces/%d/book", id)
 	l.Updatetime()
 	body := fmt.Sprintf("access_token=%s&userid=%d&type=1&id=%d&segment=%d", l.token, userid, id, l.BookTimeId+advanceTime)
-	Mlog.PF(logger.LINFO, "开始预约：%d", id)
 	bodyreader := strings.NewReader(body)
 	request, _ := http.NewRequest("POST", url, bodyreader)
 	setHeader(request)
@@ -119,7 +118,7 @@ func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 		return Bookresp, err
 	}
 	//fmt.Printf("login:%s,%s\n", username, passwd)
-	Mlog.PF(logger.LINFO, "预约：%d->%s", id, Bookresp.Msg)
+	//Mlog.PF(logger.LINFO, "预约：%d->%s", id, Bookresp.Msg)
 	return Bookresp, nil
 }
 func setHeader(request *http.Request) {

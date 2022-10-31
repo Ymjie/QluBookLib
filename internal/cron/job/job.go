@@ -66,20 +66,27 @@ func book6(u *user.User, bidchan chan int, wg *sync.WaitGroup, ctx context.Conte
 	for {
 		select {
 		default:
-			book, err := u.Book(bid, 1)
-			if book {
-				Mlog.PF(logger.LINFO, "账号：%s,已成功Book:%d", u.Username, bid)
-
-			}
-			if err.Error() == "1" {
-				bid, ok = <-bidchan
-				if !ok {
+			Mlog.PF(logger.LINFO, "开始预约：%d", bid)
+			bookresp, err := u.Book(bid, 1)
+			if err != nil {
+				if bookresp.Msg == "没有登录或登录已超时" {
 					cal()
 				}
+				if bookresp.Msg == "该空间当前状态不可预约" {
+					bid, ok = <-bidchan
+					if !ok {
+						cal()
+					}
+				}
+				if bookresp.Msg == "当前用户在该时段已存在预约，不可重复预约" {
+					cal()
+				}
+				if bookresp.Status == 1 {
+					Mlog.PF(logger.LINFO, "账号：%s,已成功Book:%d,%v", u.Username, bid, bookresp)
+
+				}
 			}
-			if err.Error() == "2" {
-				cal()
-			}
+
 		case <-ctx.Done():
 			return
 

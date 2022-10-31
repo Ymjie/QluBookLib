@@ -2,8 +2,8 @@ package user
 
 import (
 	"cklib/internal/lib"
+	"cklib/internal/lib/model"
 	"cklib/pkg/logger"
-	"errors"
 	"fmt"
 	"strconv"
 )
@@ -42,22 +42,9 @@ func (u *User) Login() bool {
 	return login
 }
 
-func (u *User) Book(id, advanceTime int) (bool, error) {
+func (u *User) Book(id, advanceTime int) (model.Bookresp, error) {
 	userid, _ := strconv.Atoi(u.Username)
 	bookresp, err := u.Lib.Book(userid, id, advanceTime)
-	if err != nil {
-		return false, err
-	}
-	if bookresp.Msg == "该空间当前状态不可预约" {
-		return false, errors.New("1")
-	}
-	if bookresp.Msg == "没有登录或登录已超时" {
-		return false, errors.New("2")
-	}
+	return bookresp, err
 
-	if bookresp.Status != 1 {
-		return false, errors.New(fmt.Sprintf("%v", bookresp))
-	}
-
-	return true, nil
 }
