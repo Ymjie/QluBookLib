@@ -36,7 +36,6 @@ func main() {
 	logger.New(nil, logger.LDEBUG, 0).PF(logger.LINFO, "账号: U:%s,P:%s    预约List:%v", username, passwd, lists)
 
 	job1 := job.NewJob(f)
-	//job1()
 	cron.Newcron("30 30 5 * * *", job1)
 	select {}
 }
