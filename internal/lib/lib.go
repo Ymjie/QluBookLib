@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -19,6 +20,7 @@ var Mlog = logger.New(nil, logger.LDEBUG, 0)
 type Lib struct {
 	Host       string
 	C          *http.Client
+	cks        []*http.Cookie
 	BookTimeId int
 	token      string
 }
@@ -75,6 +77,7 @@ func (l *Lib) Login(username string, passwd string) (bool, error) {
 		Mlog.PF(logger.LDEBUG, "%v", respList)
 		return false, errors.New(respList.Msg)
 	}
+	l.cks = resp.Cookies()
 	l.token = respList.Data.Hash.AccessToken
 	return true, nil
 }
@@ -103,6 +106,7 @@ func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 	url := fmt.Sprintf("http://yuyue.lib.qlu.edu.cn/api.php/spaces/%d/book", id)
 	l.Updatetime()
 	body := fmt.Sprintf("access_token=%s&userid=%d&type=1&id=%d&segment=%d", l.token, userid, id, l.BookTimeId+advanceTime)
+	//fmt.Println(l.BookTimeId + advanceTime)
 	bodyreader := strings.NewReader(body)
 	request, _ := http.NewRequest("POST", url, bodyreader)
 	setHeader(request)
@@ -115,12 +119,58 @@ func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 	readAll, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(readAll, &Bookresp)
 	if err != nil {
+		//fmt.Println(readAll)
 		return Bookresp, err
 	}
 	//fmt.Printf("login:%s,%s\n", username, passwd)
 	//Mlog.PF(logger.LINFO, "预约：%d->%s", id, Bookresp.Msg)
 	return Bookresp, nil
 }
+
+func (l *Lib) GetBooklist() (model.Booklist, error) {
+	var bklist model.Booklist
+	url := "http://yuyue.lib.qlu.edu.cn/user/index/book"
+	bodyreader := strings.NewReader("status=&keyword=")
+	request, _ := http.NewRequest("POST", url, bodyreader)
+
+	for _, ck := range l.cks {
+		request.AddCookie(ck)
+	}
+	//request.AddCookie()
+	setHeader(request)
+	resp, err := l.C.Do(request)
+	if err != nil {
+		return bklist, err
+	}
+	//readAll, _ := ioutil.ReadAll(resp.Body)
+	//fmt.Println(string(readAll))
+	document, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return bklist, err
+	}
+	document.Find("tbody").Find("tr").Each(func(i int, s *goquery.Selection) {
+		var ob model.OneBook
+		s.Find("td").Each(func(oi int, os *goquery.Selection) {
+			space := strings.TrimSpace(os.Text())
+			switch oi {
+			case 0:
+				ob.ID = space
+			case 1:
+				ob.Area = space
+			case 2:
+				ob.Begintime = space
+			case 3:
+				ob.Endtime = space
+			case 4:
+				ob.Status = space
+			}
+		})
+		bklist = append(bklist, ob)
+	})
+	return bklist, nil
+
+}
+
 func setHeader(request *http.Request) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
 	request.Header.Add("Accept", "application/json, text/plain, */*")

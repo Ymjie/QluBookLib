@@ -24,11 +24,12 @@ type MyLogger struct {
 	infoLogger  *log.Logger
 	errLogger   *log.Logger
 	fatalLogger *log.Logger
+	prefix      string
 }
 
 func New(w io.Writer, level int64, flag int) *MyLogger {
 	if w == nil {
-		w = os.Stderr
+		w = os.Stdout
 	}
 
 	if flag <= 0 {
@@ -87,27 +88,31 @@ func (l *MyLogger) PF(lv int, format string, v ...interface{}) {
 		if atomic.LoadInt64(&l.level) > LERROR {
 			return
 		}
-		l.errLogger.Printf(format, v...)
+		l.errLogger.Printf(l.prefix+format, v...)
 	case LDEBUG:
 		if atomic.LoadInt64(&l.level) > LDEBUG {
 			return
 		}
-		l.debugLogger.Printf(format, v...)
+		l.debugLogger.Printf(l.prefix+format, v...)
 	case LFATAL:
 		if atomic.LoadInt64(&l.level) > LDEBUG {
 			return
 		}
-		l.fatalLogger.Printf(format, v...)
+		l.fatalLogger.Printf(l.prefix+format, v...)
 	case LWARN:
 		if atomic.LoadInt64(&l.level) > LDEBUG {
 			return
 		}
-		l.warnLogger.Printf(format, v...)
+		l.warnLogger.Printf(l.prefix+format, v...)
 	case LINFO:
 		if atomic.LoadInt64(&l.level) > LINFO {
 			return
 		}
-		l.infoLogger.Printf(format, v...)
+		l.infoLogger.Printf(l.prefix+format, v...)
 	}
 
+}
+
+func (l *MyLogger) SetProfix(s string) {
+	l.prefix = s
 }

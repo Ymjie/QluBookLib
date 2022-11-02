@@ -3,21 +3,26 @@ package job
 import (
 	"cklib/internal/user"
 	"cklib/pkg/logger"
+	"cklib/pkg/notice"
 	"context"
 	"fmt"
 	"sync"
 	"time"
 )
 
-var Mlog = logger.New(nil, logger.LDEBUG, 0)
+var Mlog *logger.MyLogger
+var Nt notice.Notifier
 
-func NewJob(u *user.User) func() {
+func NewJob(u *user.User, nt notice.Notifier, t int, myLogger *logger.MyLogger) func() {
+	Mlog = myLogger
+	Mlog.PF(logger.LINFO, "将使用%d线程并发 预约List:%v", t, u.BookList)
+	Nt = nt
 	return func() {
-		gog(u)
+		gog(u, t)
 	}
 }
 
-func gog(us *user.User) {
+func gog(us *user.User, t int) {
 	//us := user.NewUser(username, passwd, list)
 	if !us.Login() {
 		Mlog.PF(logger.LERROR, "%s", "登陆失败")
@@ -35,7 +40,22 @@ func gog(us *user.User) {
 			fmt.Printf("\r距离Book时间%v", time1.Sub(time2))
 			if time2.Hour() == 6 {
 				timetk.Stop()
-				go6(us)
+				go6(us, t)
+				var isok bool
+				isok = true
+				for isok {
+					msg, b := ckBook(us)
+					if b {
+						isok = false
+						Mlog.PF(logger.LINFO, "%s", msg)
+						if Nt.Getenable() {
+							Mlog.PF(logger.LINFO, "发送通知")
+							Nt.SendNotify(fmt.Sprintf("[%s]%s", us.Username, msg))
+						}
+
+					}
+				}
+
 				Mlog.PF(logger.LINFO, "程序今天的生命周期已完成，此定时任务退出")
 			}
 		}
@@ -43,7 +63,7 @@ func gog(us *user.User) {
 
 }
 
-func go6(u *user.User) {
+func go6(u *user.User, t int) {
 	idchan := make(chan int, 10)
 	go func(u *user.User) {
 		for _, i := range u.BookList {
@@ -53,7 +73,7 @@ func go6(u *user.User) {
 	}(u)
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
-	for i := 0; i < 10; i++ {
+	for i := 0; i < t; i++ {
 		wg.Add(1)
 		go book6(u, idchan, &wg, ctx, cancel)
 	}
@@ -70,6 +90,7 @@ func book6(u *user.User, bidchan chan int, wg *sync.WaitGroup, ctx context.Conte
 		default:
 			Mlog.PF(logger.LINFO, "开始预约：%d", bid)
 			bookresp, err := u.Book(bid, 1)
+			//fmt.Println(bookresp)
 			if err != nil {
 				Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, err.Error())
 			}
@@ -88,6 +109,10 @@ func book6(u *user.User, bidchan chan int, wg *sync.WaitGroup, ctx context.Conte
 				Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, bookresp.Msg)
 				cal()
 			}
+			if bookresp.Msg == "预约时间段不存在！" {
+				Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, bookresp.Msg)
+				cal()
+			}
 			if bookresp.Status == 1 {
 				Mlog.PF(logger.LINFO, "账号：%s,已成功Book:%d,%v", u.Username, bid, bookresp)
 				cal()
@@ -98,4 +123,15 @@ func book6(u *user.User, bidchan chan int, wg *sync.WaitGroup, ctx context.Conte
 		}
 
 	}
+}
+
+func ckBook(u *user.User) (string, bool) {
+	booklist, err := u.GetBooklist()
+	if err != nil {
+		return err.Error(), false
+	}
+	if booklist[0].Status == "预约成功" {
+		return fmt.Sprintf("成功预约：%s", booklist[0].Area), true
+	}
+	return "预约失败咯~www~", true
 }
