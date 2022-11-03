@@ -22,7 +22,7 @@ func (s *Service) Start() {
 		Mlog.SetProfix(fmt.Sprintf("[%s]", v.Username))
 		newUser := user.NewUser(v.Username, v.Password, v.BookList)
 		jobone := job.NewJob(newUser, http.NewNt(v.InfoAPI, "{%msg%}"), t, Mlog)
-		cron.Newcron(spec, jobone, Mlog)
+		cron.Newcron(spec, jobone.Start, Mlog)
 	}
 	select {}
 }

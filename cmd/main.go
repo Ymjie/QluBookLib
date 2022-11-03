@@ -47,6 +47,6 @@ func main() {
 	Mlog := logger.New(nil, logger.LDEBUG, 0)
 	Mlog.PF(logger.LINFO, "账号: U:%s,P:%s    预约List:%v", username, passwd, lists)
 	job1 := job.NewJob(f, http.NewNt("", ""), 5, Mlog)
-	cron.Newcron("30 30 5 * * *", job1, Mlog)
+	cron.Newcron("30 30 5 * * *", job1.Start, Mlog)
 	select {}
 }

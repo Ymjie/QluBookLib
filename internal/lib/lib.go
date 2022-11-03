@@ -2,7 +2,6 @@ package lib
 
 import (
 	"cklib/internal/lib/model"
-	"cklib/pkg/logger"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -14,8 +13,6 @@ import (
 	"strings"
 	"time"
 )
-
-var Mlog = logger.New(nil, logger.LDEBUG, 0)
 
 type Lib struct {
 	Host       string
@@ -74,7 +71,6 @@ func (l *Lib) Login(username string, passwd string) (bool, error) {
 
 	//fmt.Println(respList)
 	if respList.Status != 1 {
-		Mlog.PF(logger.LDEBUG, "%v", respList)
 		return false, errors.New(respList.Msg)
 	}
 	l.cks = resp.Cookies()
@@ -119,7 +115,6 @@ func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 	readAll, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(readAll, &Bookresp)
 	if err != nil {
-		//fmt.Println(readAll)
 		return Bookresp, err
 	}
 	//fmt.Printf("login:%s,%s\n", username, passwd)

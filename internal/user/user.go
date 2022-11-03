@@ -3,8 +3,10 @@ package user
 import (
 	"cklib/internal/lib"
 	"cklib/internal/lib/model"
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type User struct {
@@ -42,6 +44,12 @@ func (u *User) Login() bool {
 func (u *User) Book(id, advanceTime int) (model.Bookresp, error) {
 	userid, _ := strconv.Atoi(u.Username)
 	bookresp, err := u.Lib.Book(userid, id, advanceTime)
+	if strings.Contains(err.Error(), "invalid character") {
+		err = errors.New("预约系统Web服务出错，未返回正确信息")
+	}
+	if strings.Contains(err.Error(), "closed by the remote host") {
+		err = errors.New("预约系统Web服务关闭Connection")
+	}
 	return bookresp, err
 
 }
