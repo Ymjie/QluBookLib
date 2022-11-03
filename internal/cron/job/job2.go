@@ -17,6 +17,7 @@ func NewJob(user *user.User, nt notice.Notifier, t int, myLogger *logger.MyLogge
 		u:    user,
 		t:    t,
 	}
+	myLogger.PF(logger.LINFO, "将使用%d线程并发 预约List:%v", t, user.BookList)
 	return one
 }
 
