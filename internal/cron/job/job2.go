@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-func NewJob(u *user.User, nt notice.Notifier, t int, myLogger *logger.MyLogger) *Job {
+func NewJob(user *user.User, nt notice.Notifier, t int, myLogger *logger.MyLogger) *Job {
 	one := &Job{
 		Nt:   nt,
 		Mlog: myLogger,
-		u:    u,
+		u:    user,
 		t:    t,
 	}
 	return one
