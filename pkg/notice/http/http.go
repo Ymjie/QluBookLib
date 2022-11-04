@@ -29,7 +29,10 @@ func (h *HttpNt) SendNotify(msg string) {
 	if h.Enable {
 		msg = url.QueryEscape(msg)
 		replace := strings.Replace(h.UrlText, h.Mark, msg, -1)
-		http.Get(replace)
+		_, err := http.Get(replace)
+		if err != nil {
+			return
+		}
 	}
 }
 func (h *HttpNt) Getenable() bool {

@@ -49,6 +49,8 @@ func (u *User) Book(id, advanceTime int) (model.Bookresp, error) {
 			err = errors.New("预约系统Web服务出错，未返回正确信息")
 		} else if strings.Contains(err.Error(), "closed by the remote host") {
 			err = errors.New("预约系统Web服务关闭Connection")
+		} else if strings.Contains(err.Error(), "EOF") {
+			err = errors.New("预约系统Web服务未响应")
 		}
 	}
 

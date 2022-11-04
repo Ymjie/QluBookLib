@@ -44,11 +44,11 @@ func main() {
 		select {}
 	} else if len(os.Args) == 2 {
 		configPath = os.Args[1]
-		config, err := config.Load(configPath)
+		cfg, err := config.Load(configPath)
 		if err != nil {
 			panic(err)
 		}
-		s := service.New(config)
+		s := service.New(cfg)
 		s.Start()
 	}
 

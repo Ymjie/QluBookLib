@@ -5,6 +5,7 @@ import (
 	"cklib/pkg/logger"
 	"cklib/pkg/notice"
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -76,48 +77,51 @@ func (j *Job) go6() {
 	ctx, cancel := context.WithCancel(context.Background())
 	for i := 0; i < j.t; i++ {
 		wg.Add(1)
-		go j.book6(idchan, &wg, ctx, cancel)
+		go j.book6(idchan, &wg, ctx, cancel, i)
 	}
 	wg.Wait()
 }
 
-func (j *Job) book6(bidchan chan int, wg *sync.WaitGroup, ctx context.Context, cal context.CancelFunc) {
+func (j *Job) book6(bidchan chan int, wg *sync.WaitGroup, ctx context.Context, cal context.CancelFunc, gonum int) {
 	defer wg.Done()
 	var bid int
 	var ok bool
 	bid = j.u.BookList[0]
+	num := 1
 	for {
 		select {
 		default:
-			j.Mlog.PF(logger.LINFO, "开始预约：%d", bid)
+			prefix := fmt.Sprintf("线程%d,第%d次预约:", gonum, num)
+			j.Mlog.PF(logger.LINFO, "开始！", gonum, num, bid)
 			bookresp, err := j.u.Book(bid, 1)
-			//fmt.Println(bookresp)
 			if err != nil {
-				j.Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, err.Error())
+				j.Mlog.PF(logger.LINFO, "%s %d 失败,%s", prefix, bid, err.Error())
 			}
 			if bookresp.Msg == "没有登录或登录已超时" {
-				j.Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, bookresp.Msg)
+				j.Mlog.PF(logger.LINFO, "%s %d 失败,%s", prefix, bid, bookresp.Msg)
 				cal()
 			}
 			if bookresp.Msg == "该空间当前状态不可预约" {
-				j.Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, bookresp.Msg)
+				j.Mlog.PF(logger.LINFO, "%s %d 失败,%s", prefix, bid, bookresp.Msg)
 				bid, ok = <-bidchan
 				if !ok {
 					cal()
 				}
 			}
 			if bookresp.Msg == "当前用户在该时段已存在预约，不可重复预约" {
-				j.Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, bookresp.Msg)
+				j.Mlog.PF(logger.LINFO, "%s %d 失败,%s", prefix, bid, bookresp.Msg)
 				cal()
 			}
 			if bookresp.Msg == "预约时间段不存在！" {
-				j.Mlog.PF(logger.LINFO, "预约：%d 失败,%s", bid, bookresp.Msg)
+				j.Mlog.PF(logger.LINFO, "%s %d 失败,%s", prefix, bid, bookresp.Msg)
 				cal()
 			}
 			if bookresp.Status == 1 {
-				j.Mlog.PF(logger.LINFO, "账号：%s,已成功Book:%d,%v", j.u.Username, bid, bookresp)
+				bytes, _ := json.Marshal(bookresp)
+				j.Mlog.PF(logger.LINFO, "%s %d 成功,详情:%v", prefix, bid, string(bytes))
 				cal()
 			}
+			num++
 		case <-ctx.Done():
 			return
 
