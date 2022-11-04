@@ -18,13 +18,17 @@ func NewJob(user *user.User, nt notice.Notifier, t int, myLogger *logger.MyLogge
 		u:    user,
 		t:    t,
 	}
+
+	if !user.Login() {
+		myLogger.PF(logger.LWARN, "%s", "登陆失败！请检查账号密码和网络状态！")
+	}
 	myLogger.PF(logger.LINFO, "将使用%d线程并发 预约List:%v", t, user.BookList)
 	return one
 }
 
 func (j *Job) Start() {
 	if !j.u.Login() {
-		j.Mlog.PF(logger.LERROR, "%s", "登陆失败")
+		j.Mlog.PF(logger.LWARN, "%s", "登陆失败")
 		return
 	}
 	j.Mlog.PF(logger.LINFO, "%s", "登陆成功")

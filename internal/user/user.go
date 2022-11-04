@@ -4,7 +4,6 @@ import (
 	"cklib/internal/lib"
 	"cklib/internal/lib/model"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -32,9 +31,9 @@ func (u *User) keepLive() {
 }
 
 func (u *User) Login() bool {
-	login, err := u.Lib.Login(u.Username, u.Passwd)
+	login, _ := u.Lib.Login(u.Username, u.Passwd)
 	if !login {
-		fmt.Println(err)
+		//fmt.Println(err)
 		return false
 	}
 	go u.keepLive()
