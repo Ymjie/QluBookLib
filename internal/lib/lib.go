@@ -156,7 +156,7 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	if tbody.Length() == 0 {
 		return bklist, errors.New("TbodyLength==0")
 	}
-	document.Find("tbody").Find("tr").Each(func(i int, s *goquery.Selection) {
+	tbody.Find("tr").Each(func(i int, s *goquery.Selection) {
 		var ob model.OneBook
 		s.Find("td").Each(func(oi int, os *goquery.Selection) {
 			space := strings.TrimSpace(os.Text())
