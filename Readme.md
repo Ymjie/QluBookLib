@@ -4,7 +4,7 @@ Golang 开发的 齐鲁工业大学 图书馆六点自动预约程序，欢迎Pu
 
 **截图**
 
-![](https://jn2.is.shanhe.com/campus/file/ef6f64e6-c3f6-444c-844d-f357dcc4a96d_01.png)
+![](img/01.png)
 
 ### 使用方法
 
