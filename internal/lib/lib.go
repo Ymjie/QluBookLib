@@ -143,16 +143,19 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 		return bklist, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return bklist, errors.New("ResponseCodeNot200")
-	}
+	//if resp.StatusCode != 200 {
+	//	return bklist, errors.New("ResponseCodeNot200")
+	//}
 	//readAll, _ := ioutil.ReadAll(resp.Body)
 	//fmt.Println(string(readAll))
 	document, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return bklist, err
 	}
-
+	tbody := document.Find("tbody")
+	if tbody.Length() == 0 {
+		return bklist, errors.New("TbodyLength==0")
+	}
 	document.Find("tbody").Find("tr").Each(func(i int, s *goquery.Selection) {
 		var ob model.OneBook
 		s.Find("td").Each(func(oi int, os *goquery.Selection) {
