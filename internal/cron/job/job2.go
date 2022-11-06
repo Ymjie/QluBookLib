@@ -96,7 +96,7 @@ func (j *Job) book6(bidchan chan int, wg *sync.WaitGroup, ctx context.Context, c
 		select {
 		default:
 			prefix := fmt.Sprintf("线程%d,第%d次预约:", gonum, num)
-			j.Mlog.PF(logger.LINFO, "开始！", gonum, num, bid)
+			j.Mlog.PF(logger.LINFO, "%s %d 开始！", prefix, bid)
 			bookresp, err := j.u.Book(bid, 1)
 			if err != nil {
 				j.Mlog.PF(logger.LINFO, "%s %d 失败,%s", prefix, bid, err.Error())

@@ -61,6 +61,7 @@ func (l *Lib) Login(username string, passwd string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer resp.Body.Close()
 	var respList model.Loginresp
 	readAll, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(readAll, &respList)
@@ -84,9 +85,11 @@ func (l *Lib) UpdatebookTimeId() (int, error) {
 	res, _ := http.NewRequest("GET", url, nil)
 	setHeader(res)
 	response, err := l.C.Do(res)
+
 	if err != nil {
 		return 0, err
 	}
+	defer response.Body.Close()
 	readAll, _ := ioutil.ReadAll(response.Body)
 	var resp model.BookTimeIdresp
 	err = json.Unmarshal(readAll, &resp)
@@ -111,6 +114,7 @@ func (l *Lib) Book(userid, id, advanceTime int) (model.Bookresp, error) {
 	if err != nil {
 		return Bookresp, err
 	}
+	defer resp.Body.Close()
 
 	readAll, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(readAll, &Bookresp)
@@ -134,8 +138,13 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	//request.AddCookie()
 	setHeader(request)
 	resp, err := l.C.Do(request)
+	defer resp.Body.Close()
 	if err != nil {
 		return bklist, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return bklist, errors.New("ResponseCodeNot200")
 	}
 	//readAll, _ := ioutil.ReadAll(resp.Body)
 	//fmt.Println(string(readAll))
@@ -143,6 +152,7 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	if err != nil {
 		return bklist, err
 	}
+
 	document.Find("tbody").Find("tr").Each(func(i int, s *goquery.Selection) {
 		var ob model.OneBook
 		s.Find("td").Each(func(oi int, os *goquery.Selection) {
