@@ -138,7 +138,7 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	//request.AddCookie()
 	setHeader(request)
 	resp, err := l.C.Do(request)
-	defer resp.Body.Close()
+	//defer resp.Body.Close()
 	if err != nil {
 		return bklist, err
 	}
