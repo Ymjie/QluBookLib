@@ -138,7 +138,6 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	//request.AddCookie()
 	setHeader(request)
 	resp, err := l.C.Do(request)
-	//defer resp.Body.Close()
 	if err != nil {
 		return bklist, err
 	}
@@ -150,11 +149,15 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	//fmt.Println(string(readAll))
 	document, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return bklist, err
+		return bklist, errors.New("resp.Body解析出错")
+	}
+
+	if !strings.Contains(document.Text(), "空间管理系统") {
+		return bklist, errors.New("Body Text Not Contain '空间管理系统'")
 	}
 	tbody := document.Find("tbody")
 	if tbody.Length() == 0 {
-		return bklist, errors.New("TbodyLength==0")
+		return bklist, errors.New("Tbody Length==0")
 	}
 	tbody.Find("tr").Each(func(i int, s *goquery.Selection) {
 		var ob model.OneBook

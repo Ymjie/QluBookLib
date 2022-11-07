@@ -60,6 +60,8 @@ func (j *Job) gog() {
 							j.Nt.SendNotify(fmt.Sprintf("[%s]%s", j.u.Username, msg))
 						}
 
+					} else {
+						j.Mlog.PF(logger.LDEBUG, "%s", msg)
 					}
 				}
 
@@ -138,9 +140,6 @@ func ckBook(u *user.User) (string, bool) {
 	booklist, err := u.GetBooklist()
 	if err != nil {
 		return err.Error(), false
-	}
-	if len(booklist) == 0 {
-		return "null", false
 	}
 	if booklist[0].Status == "预约成功" {
 		return fmt.Sprintf("成功预约：%s", booklist[0].Area), true
