@@ -10,6 +10,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -131,7 +132,6 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	url := "http://yuyue.lib.qlu.edu.cn/user/index/book"
 	bodyreader := strings.NewReader("status=&keyword=")
 	request, _ := http.NewRequest("POST", url, bodyreader)
-
 	for _, ck := range l.cks {
 		request.AddCookie(ck)
 	}
@@ -142,9 +142,9 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 		return bklist, err
 	}
 	defer resp.Body.Close()
-	//if resp.StatusCode != 200 {
-	//	return bklist, errors.New("ResponseCodeNot200")
-	//}
+	if resp.StatusCode != 200 {
+		return bklist, errors.New("ResponseCodeNot200")
+	}
 	//readAll, _ := ioutil.ReadAll(resp.Body)
 	//fmt.Println(string(readAll))
 	document, err := goquery.NewDocumentFromReader(resp.Body)
@@ -181,7 +181,47 @@ func (l *Lib) GetBooklist() (model.Booklist, error) {
 	return bklist, nil
 
 }
+func (l *Lib) LookBook(id int) (model.Lookbook, error) {
+	url := fmt.Sprintf("http://yuyue.lib.qlu.edu.cn/user/index/look/id/%d", id)
+	var lb model.Lookbook
+	request, _ := http.NewRequest("GET", url, nil)
+	for _, ck := range l.cks {
+		request.AddCookie(ck)
+	}
+	setHeader(request)
+	resp, err := l.C.Do(request)
+	if err != nil {
+		return lb, err
+	}
+	document, err := goquery.NewDocumentFromReader(resp.Body)
+	document.Find("#data_form").Find(".form-control-static").Each(func(i int, s *goquery.Selection) {
+		space := strings.TrimSpace(s.Text())
+		switch i {
+		case 0:
+			lb.ID, _ = strconv.Atoi(space)
+		case 1:
+			lb.Status = space
+		case 2:
+			lb.StuID, _ = strconv.Atoi(space)
+		case 3:
+			lb.Name = space
+		case 4:
+			lb.Area = space
+		case 5:
+			lb.Type = space
+		case 6:
+			lb.BeginTime, _ = time.Parse("2006-01-02 15:04:05", space)
+		case 7:
+			lb.EndTime, _ = time.Parse("2006-01-02 15:04:05", space)
+		case 12:
+			lb.AuditTime, _ = time.Parse("2006-01-02 15:04:05 / 无", space)
+		case 13:
+			lb.Auditresult = space
+		}
 
+	})
+	return lb, nil
+}
 func setHeader(request *http.Request) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
 	request.Header.Add("Accept", "application/json, text/plain, */*")

@@ -43,19 +43,29 @@ func (u *User) Login() bool {
 func (u *User) Book(id, advanceTime int) (model.Bookresp, error) {
 	userid, _ := strconv.Atoi(u.Username)
 	bookresp, err := u.Lib.Book(userid, id, advanceTime)
-	if err != nil {
-		if strings.Contains(err.Error(), "invalid character") {
-			err = errors.New("预约系统Web服务出错，未返回正确信息")
-		} else if strings.Contains(err.Error(), "closed by the remote host") {
-			err = errors.New("预约系统Web服务关闭Connection")
-		} else if strings.Contains(err.Error(), "EOF") {
-			err = errors.New("预约系统Web服务未响应")
-		}
-	}
-
+	err = vkhttperr(err)
 	return bookresp, err
 
 }
 func (u *User) GetBooklist() (model.Booklist, error) {
-	return u.Lib.GetBooklist()
+	booklist, err := u.Lib.GetBooklist()
+	err = vkhttperr(err)
+	return booklist, err
+}
+func (u *User) LookBook(id int) (model.Lookbook, error) {
+	return u.Lib.LookBook(id)
+
+}
+
+func vkhttperr(err error) error {
+	if err != nil {
+		if strings.Contains(err.Error(), "invalid character") {
+			err = errors.New("解析出错，未返回正确信息")
+		} else if strings.Contains(err.Error(), "closed by the remote host") {
+			err = errors.New("请求出错，Remote Host关闭Connection")
+		} else if strings.Contains(err.Error(), "EOF") {
+			err = errors.New("请求出错,未响应")
+		}
+	}
+	return err
 }

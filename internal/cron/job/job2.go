@@ -48,21 +48,10 @@ func (j *Job) gog() {
 			if time2.Hour() == 6 {
 				timetk.Stop()
 				j.go6()
-				var isok bool
-				isok = true
-				for isok {
-					msg, b := ckBook(j.u)
-					if b {
-						isok = false
-						j.Mlog.PF(logger.LINFO, "%s", msg)
-						if j.Nt.Getenable() {
-							j.Mlog.PF(logger.LINFO, "发送通知")
-							j.Nt.SendNotify(fmt.Sprintf("[%s]%s", j.u.Username, msg))
-						}
-
-					} else {
-						j.Mlog.PF(logger.LDEBUG, "%s", msg)
-					}
+				msg := j.ckBook(j.u)
+				if j.Nt.Getenable() {
+					j.Mlog.PF(logger.LINFO, "发送通知")
+					j.Nt.SendNotify(fmt.Sprintf("[%s]%s", j.u.Username, msg))
 				}
 
 				j.Mlog.PF(logger.LINFO, "程序今天的生命周期已完成，此定时任务退出")
@@ -136,13 +125,19 @@ func (j *Job) book6(bidchan chan int, wg *sync.WaitGroup, ctx context.Context, c
 	}
 }
 
-func ckBook(u *user.User) (string, bool) {
-	booklist, err := u.GetBooklist()
-	if err != nil {
-		return err.Error(), false
+func (j *Job) ckBook(u *user.User) string {
+	var count int
+	for count <= 20 {
+		booklist, err := u.GetBooklist()
+		if booklist[0].Status == "预约成功" {
+			return fmt.Sprintf("成功预约：%s", booklist[0].Area)
+		} else if booklist[0].Status != "" {
+			b, _ := json.Marshal(booklist[0])
+			j.Mlog.PF(logger.LDEBUG, "当前最新预约记录：%s", string(b))
+			return "预约失败咯~www~"
+		}
+		j.Mlog.PF(logger.LDEBUG, "%s", err.Error())
+		count++
 	}
-	if booklist[0].Status == "预约成功" {
-		return fmt.Sprintf("成功预约：%s", booklist[0].Area), true
-	}
-	return "预约失败咯~www~", true
+	return "查询是否预约成功超时，请自行检查"
 }
