@@ -127,8 +127,13 @@ func (j *Job) book6(bidchan chan int, wg *sync.WaitGroup, ctx context.Context, c
 
 func (j *Job) ckBook(u *user.User) string {
 	var count int
-	for count <= 20 {
+	for count <= 100 {
 		booklist, err := u.GetBooklist()
+		if err != nil {
+			j.Mlog.PF(logger.LDEBUG, "%s", err.Error())
+			count++
+			continue
+		}
 		if booklist[0].Status == "预约成功" {
 			return fmt.Sprintf("成功预约：%s", booklist[0].Area)
 		} else if booklist[0].Status != "" {
@@ -136,8 +141,6 @@ func (j *Job) ckBook(u *user.User) string {
 			j.Mlog.PF(logger.LDEBUG, "当前最新预约记录：%s", string(b))
 			return "预约失败咯~www~"
 		}
-		j.Mlog.PF(logger.LDEBUG, "%s", err.Error())
-		count++
 	}
 	return "查询是否预约成功超时，请自行检查"
 }
