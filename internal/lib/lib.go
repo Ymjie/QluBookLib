@@ -194,11 +194,14 @@ func (l *Lib) LookBook(id int) (model.Lookbook, error) {
 		return lb, err
 	}
 	document, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return lb, err
+	}
 	document.Find("#data_form").Find(".form-control-static").Each(func(i int, s *goquery.Selection) {
 		space := strings.TrimSpace(s.Text())
 		switch i {
 		case 0:
-			lb.ID, _ = strconv.Atoi(space)
+			lb.LBKID, _ = strconv.Atoi(space)
 		case 1:
 			lb.Status = space
 		case 2:

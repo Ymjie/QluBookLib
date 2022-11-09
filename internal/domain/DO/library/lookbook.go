@@ -1,10 +1,12 @@
-package model
+package library
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
 type Lookbook struct {
+	gorm.Model
 	LBKID       int
 	Status      string
 	StuID       int

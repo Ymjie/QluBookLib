@@ -4,10 +4,10 @@ import (
 	"cklib/internal/config"
 	"cklib/internal/cron"
 	"cklib/internal/cron/job"
+	"cklib/internal/server"
 	"cklib/internal/user"
 	"cklib/pkg/logger"
 	"cklib/pkg/notice/http"
-	"cklib/service"
 	"fmt"
 	"os"
 	"strconv"
@@ -48,7 +48,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		s := service.New(cfg)
+		s := server.New(cfg)
 		s.Start()
 	}
 
