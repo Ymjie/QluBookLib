@@ -134,6 +134,11 @@ func (j *Job) ckBook(u *user.User) string {
 			count++
 			continue
 		}
+		if len(booklist) == 0 {
+			j.Mlog.PF(logger.LDEBUG, "获取失预约记录败，原因未知。")
+			count++
+			continue
+		}
 		if booklist[0].Status == "预约成功" {
 			return fmt.Sprintf("成功预约：%s", booklist[0].Area)
 		} else if booklist[0].Status != "" {
