@@ -135,14 +135,19 @@ func (j *Job) ckBook(u *user.User) string {
 			continue
 		}
 		if len(booklist) == 0 {
-			j.Mlog.PF(logger.LDEBUG, "获取失预约记录败，原因未知。")
+			j.Mlog.PF(logger.LDEBUG, "获取失预约记录失败，原因未知。")
 			count++
 			continue
 		}
+		if booklist[0].Status == "未知" {
+			j.Mlog.PF(logger.LDEBUG, "获取失预约记录失败，返回未知信息。")
+			continue
+		}
+		b, _ := json.Marshal(booklist[0])
 		if booklist[0].Status == "预约成功" {
+			j.Mlog.PF(logger.LDEBUG, "当前最新预约记录：%s", b)
 			return fmt.Sprintf("成功预约：%s", booklist[0].Area)
 		} else if booklist[0].Status != "" {
-			b, _ := json.Marshal(booklist[0])
 			j.Mlog.PF(logger.LDEBUG, "当前最新预约记录：%s", string(b))
 			return "预约失败咯~www~"
 		}
